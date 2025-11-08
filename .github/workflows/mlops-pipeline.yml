@@ -2,6 +2,67 @@ name: MLOps Vehicle Pricing Pipeline
 
 on:
   push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly Sunday
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+        
+    - name: Install dependencies
+      run: |
+        pip install -r scripts/requirements.txt
+        pip install pytest flake8 mlflow
+        
+    - name: Lint code
+      run: |
+        flake8 scripts/ --count --max-complexity=10 --statistics
+        
+    - name: Test Python scripts
+      run: |
+        python -c "import scripts.data_prep; import 
+scripts.model_train; import scripts.model_register; print('All 
+imports successful')"
+        
+    - name: Validate requirements
+      run: |
+        python -c "import sklearn; import pandas; import mlflow; 
+print('All dependencies installed successfully')"
+
+  ci-cd-demo:
+    needs: code-quality
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+        
+    - name: Install dependencies
+      run: pip install -r scripts/requirements.txt
+      
+    - name: CI/CD Validation Complete
+      run: echo "GitHub Actions CI/CD pipeline successfully 
+validated!"
+name: MLOps Vehicle 
+Pricing Pipeline
+
+on:
+  push:
     branches: [ main ]
 
 jobs:
